@@ -25,8 +25,8 @@ func main() {
 	})
 
 	mux.HandleFunc("GET /api/healthz", handlerReadiness)
-	mux.HandleFunc("GET /api/metrics", apiCfg.handlerMetrics)
-	mux.HandleFunc("POST /api/reset", apiCfg.handlerReset)
+	mux.HandleFunc("GET /admin/metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("POST /admin/reset", apiCfg.handlerReset)
 
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -58,8 +58,17 @@ func handlerReadiness(w http.ResponseWriter, req *http.Request) {
 
 func (apiCfg *apiConfig) handlerMetrics(w http.ResponseWriter, req *http.Request) {
 	v := apiCfg.fileserverHits.Load()
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	_, err := fmt.Fprintf(w, "Hits: %d", v)
+
+	htmlResponse := fmt.Sprintf(`
+		<html>
+			<body>
+				<h1>Welcome, Chirpy Admin</h1>
+				<p>Chirpy has been visited %d times!</p>
+			</body>
+		</html>
+		`, v)
+	w.Header().Set("Content-Type", "text/html; charset=utf-8")
+	_, err := w.Write([]byte(htmlResponse))
 	if err != nil {
 		fmt.Printf("error writing request : %v", err)
 	}
