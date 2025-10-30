@@ -1,22 +1,70 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"sync/atomic"
 )
+
+type apiConfig struct {
+	fileserverHits atomic.Int32
+}
 
 func main() {
 	const filepathRoot = "."
 	const port = "8080"
+	apiCfg := &apiConfig{}
+
+	handler := http.StripPrefix("/app", apiCfg.middlewareMetricsInc(http.FileServer(http.Dir(filepathRoot))))
 
 	mux := http.NewServeMux()
-	mux.Handle("/", http.FileServer(http.Dir(filepathRoot)))
+	mux.Handle("/app/", handler)
+	mux.HandleFunc("/app", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/app/", http.StatusMovedPermanently)
+	})
 
-	server := &http.Server{
+	mux.HandleFunc("GET /healthz", handlerReadiness)
+	mux.HandleFunc("GET /metrics", apiCfg.handlerMetrics)
+	mux.HandleFunc("POST /reset", apiCfg.handlerReset)
+
+	srv := &http.Server{
 		Addr:    ":" + port,
 		Handler: mux,
 	}
 
 	log.Printf("serving files from %s on port: %s\n", filepathRoot, port)
-	log.Fatal(server.ListenAndServe())
+	log.Fatal(srv.ListenAndServe())
+}
+
+func (apiCfg *apiConfig) handlerReset(w http.ResponseWriter, req *http.Request) {
+	apiCfg.fileserverHits.Store(0)
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write([]byte("Reset App OK!"))
+	if err != nil {
+		fmt.Printf("error writing statusText: %s", err)
+	}
+}
+
+func handlerReadiness(w http.ResponseWriter, req *http.Request) {
+	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
+	w.WriteHeader(http.StatusOK)
+	_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
+	if err != nil {
+		fmt.Printf("error writing statusText: %s", err)
+	}
+}
+
+func (apiCfg *apiConfig) handlerMetrics(w http.ResponseWriter, req *http.Request) {
+	v := apiCfg.fileserverHits.Load()
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+	_, err := fmt.Fprintf(w, "Hits: %d", v)
+	if err != nil {
+		fmt.Printf("error writing request : %v", err)
+	}
+}
+
+func (apiCfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { apiCfg.fileserverHits.Add(1); next.ServeHTTP(w, r) })
 }
