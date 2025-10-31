@@ -1,9 +1,17 @@
 package main
 
 import (
+	"context"
+	"database/sql"
+	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync/atomic"
+
+	"github.com/jifpbj/chirpy/internal/database"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 )
 
 type apiConfig struct {
@@ -11,6 +19,17 @@ type apiConfig struct {
 }
 
 func main() {
+	godotenv.Load()
+	dbURL := os.Getenv("DB_URL")
+
+	db, err := sql.Open("postgres", dbURL)
+	if err != nil {
+		fmt.Printf("error opening sql: %v", err)
+	}
+	dbQueries := database.New(db)
+	user, err := dbQueries.CreateUser(context.Background(), "a@gmail.com")
+	fmt.Printf("user: %v", user.Email)
+
 	const filepathRoot = "."
 	const port = "8080"
 	apiCfg := &apiConfig{}
