@@ -1,52 +1,9 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 )
-
-func (apiCfg *apiConfig) handlerValidate(w http.ResponseWriter, r *http.Request) {
-	type JSONinput struct {
-		Body string `json:"body"`
-	}
-
-	type JSONoutput struct {
-		Valid bool   `json:"valid"`
-		Error string `json:"error"`
-	}
-
-	decoder := json.NewDecoder(r.Body)
-	input := JSONinput{}
-	output := JSONoutput{true, ""}
-
-	err := decoder.Decode(&input)
-	if err != nil {
-		output.Error = "Something went wrong"
-		output.Valid = false
-		w.WriteHeader(500)
-	}
-
-	if len(input.Body) > 140 {
-		output.Error = "Chirp is too long"
-		output.Valid = false
-		w.WriteHeader(400)
-	}
-
-	dat, err := json.Marshal(output)
-	if err != nil {
-		fmt.Printf("error marshaling output json: %v", err)
-		w.WriteHeader(500)
-	}
-
-	w.Header().Set("Content-Type", "application/json")
-
-	_, err = w.Write(dat)
-	if err != nil {
-		w.WriteHeader(500)
-		fmt.Printf("error writing data: %v", err)
-	}
-}
 
 func (apiCfg *apiConfig) handlerReset(w http.ResponseWriter, req *http.Request) {
 	apiCfg.fileserverHits.Store(0)
