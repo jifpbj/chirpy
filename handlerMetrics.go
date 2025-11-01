@@ -5,25 +5,6 @@ import (
 	"net/http"
 )
 
-func (apiCfg *apiConfig) handlerReset(w http.ResponseWriter, req *http.Request) {
-	apiCfg.fileserverHits.Store(0)
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, err := w.Write([]byte("Hits reset back to 0"))
-	if err != nil {
-		fmt.Printf("error writing statusText: %s", err)
-	}
-}
-
-func handlerReadiness(w http.ResponseWriter, req *http.Request) {
-	w.Header().Add("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	_, err := w.Write([]byte(http.StatusText(http.StatusOK)))
-	if err != nil {
-		fmt.Printf("error writing statusText: %s", err)
-	}
-}
-
 func (apiCfg *apiConfig) handlerMetrics(w http.ResponseWriter, req *http.Request) {
 	v := apiCfg.fileserverHits.Load()
 
