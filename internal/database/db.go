@@ -2,7 +2,6 @@
 // versions:
 //   sqlc v1.30.0
 
-// Package database is for database queries
 package database
 
 import (
