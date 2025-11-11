@@ -2,6 +2,7 @@ package auth
 
 import (
 	"fmt"
+	"net/http"
 	"testing"
 	"time"
 
@@ -70,5 +71,16 @@ func TestValidateJWTInvalidSecret(t *testing.T) {
 	_, err = ValidateJWT(tokenString, "wrong secret")
 	if err == nil {
 		t.Errorf("wrong secret should return an error")
+	}
+}
+
+func TestGetBearerToken(t *testing.T) {
+	headers := http.Header{"Authorization": []string{"Bearer somethingtokenvalue"}}
+	bearerToken, err := GetBearerToken(headers)
+	if err != nil {
+		t.Errorf("Error getting bearertoken: %v", err)
+	}
+	if bearerToken != "somethingtokenvalue" {
+		t.Errorf("Error: bearer token does not match expected value")
 	}
 }
