@@ -3,11 +3,15 @@ package main
 import (
 	"encoding/json"
 	"net/http"
+
+	"github.com/jifpbj/chirpy/internal/auth"
+	"github.com/jifpbj/chirpy/internal/database"
 )
 
 func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, req *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Password string `json:"password"`
+		Email    string `json:"email"`
 	}
 
 	params := parameters{}
@@ -18,7 +22,18 @@ func (apiCfg *apiConfig) handlerCreateUser(w http.ResponseWriter, req *http.Requ
 		respondWithError(w, http.StatusBadRequest, "Couldn't decode parameters", err)
 		return
 	}
-	user, err := apiCfg.db.CreateUser(req.Context(), params.Email)
+
+	password, err := auth.HashPassword(params.Password)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "couldn't hash password", err)
+		return
+	}
+	userParams := database.CreateUserParams{
+		Email:          params.Email,
+		HashedPassword: password,
+	}
+
+	user, err := apiCfg.db.CreateUser(req.Context(), userParams)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Couldn't create user", err)
 		return

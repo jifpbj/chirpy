@@ -3,6 +3,7 @@
 //   sqlc v1.30.0
 // source: chirps.sql
 
+// Package database deals with database queries and transactions
 package database
 
 import (
@@ -31,6 +32,24 @@ type CreateChirpParams struct {
 
 func (q *Queries) CreateChirp(ctx context.Context, arg CreateChirpParams) (Chirp, error) {
 	row := q.db.QueryRowContext(ctx, createChirp, arg.Body, arg.UserID)
+	var i Chirp
+	err := row.Scan(
+		&i.ID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Body,
+		&i.UserID,
+	)
+	return i, err
+}
+
+const retrieveChirpByID = `-- name: RetrieveChirpByID :one
+SELECT id, created_at, updated_at, body, user_id from chirps
+WHERE id = $1
+`
+
+func (q *Queries) RetrieveChirpByID(ctx context.Context, id uuid.UUID) (Chirp, error) {
+	row := q.db.QueryRowContext(ctx, retrieveChirpByID, id)
 	var i Chirp
 	err := row.Scan(
 		&i.ID,

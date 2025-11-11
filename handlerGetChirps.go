@@ -2,7 +2,12 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	"errors"
+	"fmt"
 	"net/http"
+
+	"github.com/google/uuid"
 )
 
 func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
@@ -24,4 +29,31 @@ func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request
 		output = append(output, out)
 	}
 	respondWithJSON(w, 200, output)
+}
+
+func (apiCfg *apiConfig) handlerGetChirpByID(w http.ResponseWriter, r *http.Request) {
+	chirpID := r.PathValue("chirpID")
+	chirpUUID, err := uuid.Parse(chirpID)
+	if err != nil {
+		respondWithError(w, http.StatusNotFound, "invalid ID", err)
+		return
+	}
+
+	chirp, err := apiCfg.db.RetrieveChirpByID(context.Background(), chirpUUID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			respondWithError(w, http.StatusNotFound, fmt.Sprintf("Chirp with ID %s not found", chirpID), err)
+		}
+		respondWithError(w, http.StatusNotFound, "Couldn't get chirp by ID", err)
+		return
+	}
+	out := Chirp{
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
+	}
+
+	respondWithJSON(w, http.StatusOK, out)
 }
