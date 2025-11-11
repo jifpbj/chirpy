@@ -19,6 +19,7 @@ type apiConfig struct {
 	fileserverHits atomic.Int32
 	platform       string
 	db             *database.Queries
+	secret         string
 }
 
 type User struct {
@@ -27,6 +28,7 @@ type User struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"password"`
+	Token          string    `json:"token"`
 }
 
 type Chirp struct {
@@ -44,6 +46,7 @@ func main() {
 	}
 	platformEnv := os.Getenv("PLATFORM")
 	dbURL := os.Getenv("DB_URL")
+	secretKey := os.Getenv("SECRET")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -57,6 +60,7 @@ func main() {
 	apiCfg := &apiConfig{
 		platform: platformEnv,
 		db:       dbQueries,
+		secret:   secretKey,
 	}
 
 	mux := http.NewServeMux()
