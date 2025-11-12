@@ -29,6 +29,7 @@ type User struct {
 	Email          string    `json:"email"`
 	HashedPassword string    `json:"password"`
 	Token          string    `json:"token"`
+	RefreshToken   string    `json:"refresh_token"`
 }
 
 type Chirp struct {
@@ -82,6 +83,12 @@ func main() {
 	mux.HandleFunc("GET /api/chirps", apiCfg.handlerGetChirps)
 	mux.HandleFunc("GET /api/chirps/{chirpID}", apiCfg.handlerGetChirpByID)
 	mux.HandleFunc("POST /api/login", apiCfg.handlerLogin)
+
+	mux.HandleFunc("POST /api/refresh", apiCfg.handlerRefresh)
+	mux.HandleFunc("POST /api/revoke", apiCfg.handlerRevoke)
+
+	mux.HandleFunc("PUT /api/users", apiCfg.handlerUpdateUser)
+	mux.HandleFunc("DELETE /api/chirps/{chirpID}", apiCfg.handlerDeleteChirp)
 
 	srv := &http.Server{
 		Addr:    ":" + port,

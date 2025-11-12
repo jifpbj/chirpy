@@ -15,6 +15,7 @@ func MakeJWT(userID uuid.UUID, tokenSecret string, expiresIn time.Duration) (str
 	claims := jwt.RegisteredClaims{
 		Issuer:    "chirpy",
 		ExpiresAt: jwt.NewNumericDate(time.Now().UTC().Add(expiresIn)),
+		IssuedAt:  jwt.NewNumericDate(time.Now().UTC()),
 		Subject:   userID.String(),
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
