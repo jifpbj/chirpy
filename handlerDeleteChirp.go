@@ -35,9 +35,10 @@ func (apiCfg *apiConfig) handlerDeleteChirp(w http.ResponseWriter, r *http.Reque
 		return
 	} else if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "unable to retrieve chirp", err)
+		return
 	}
 	if chirp.UserID != userID {
-		respondWithError(w, http.StatusForbidden, "you do not have permission to delete this chirp", err)
+		respondWithError(w, http.StatusForbidden, "you do not have permission to delete this chirp", nil)
 		return
 	}
 
