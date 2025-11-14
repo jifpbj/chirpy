@@ -7,9 +7,14 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jifpbj/chirpy/internal/auth"
 )
 
 func (apiCfg *apiConfig) handlerPolka(w http.ResponseWriter, r *http.Request) {
+	polkaToken, err := auth.GetAPIKey(r.Header)
+	if polkaToken != apiCfg.polkaKey {
+		respondWithError(w, 401, "PolkaAPI token doesn't match", err)
+	}
 	type parameters struct {
 		Event string `json:"event"`
 		Data  struct {
@@ -20,7 +25,7 @@ func (apiCfg *apiConfig) handlerPolka(w http.ResponseWriter, r *http.Request) {
 	params := parameters{}
 	decoder := json.NewDecoder(r.Body)
 
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Couldn't decode parameters", err)
 		return

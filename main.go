@@ -20,6 +20,7 @@ type apiConfig struct {
 	platform       string
 	db             *database.Queries
 	secret         string
+	polkaKey       string
 }
 
 type User struct {
@@ -49,6 +50,7 @@ func main() {
 	platformEnv := os.Getenv("PLATFORM")
 	dbURL := os.Getenv("DB_URL")
 	secretKey := os.Getenv("SECRET")
+	polkaKey := os.Getenv("POLKA_KEY")
 
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
@@ -63,6 +65,7 @@ func main() {
 		platform: platformEnv,
 		db:       dbQueries,
 		secret:   secretKey,
+		polkaKey: polkaKey,
 	}
 
 	mux := http.NewServeMux()
