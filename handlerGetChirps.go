@@ -6,17 +6,19 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"sort"
 
 	"github.com/google/uuid"
 	"github.com/jifpbj/chirpy/internal/database"
 )
 
 func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
-	str := r.URL.Query().Get("author_id")
+	authorID := r.URL.Query().Get("author_id")
+	sortOrder := r.URL.Query().Get("sort")
 	var chirps []database.Chirp
 
-	if str != "" {
-		id, err := uuid.Parse(str)
+	if authorID != "" {
+		id, err := uuid.Parse(authorID)
 		if err != nil {
 			respondWithError(w, 400, "invalid author id", err)
 			return
@@ -34,6 +36,21 @@ func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request
 			return
 		}
 		chirps = cs
+	}
+
+	// sort Order based on sortOrder
+	if sortOrder != "" && sortOrder != "asc" && sortOrder != "desc" {
+		respondWithError(w, 400, "invalid sort order", errors.New("sort must be 'asc' or 'desc'"))
+		return
+	}
+	if sortOrder == "" || sortOrder == "asc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].CreatedAt.Before(chirps[j].CreatedAt)
+		})
+	} else if sortOrder == "desc" {
+		sort.Slice(chirps, func(i, j int) bool {
+			return chirps[i].CreatedAt.After(chirps[j].CreatedAt)
+		})
 	}
 
 	output := make([]Chirp, 0)
