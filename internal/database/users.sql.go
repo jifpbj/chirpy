@@ -19,7 +19,7 @@ VALUES (
     now(),
     $1,
     $2,
-    false
+    FALSE
 )
 
 RETURNING id, created_at, updated_at, email, hashed_password, is_chirpy_red

@@ -8,12 +8,32 @@ import (
 	"net/http"
 
 	"github.com/google/uuid"
+	"github.com/jifpbj/chirpy/internal/database"
 )
 
 func (apiCfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
-	chirps, err := apiCfg.db.RetrieveChirps(context.Background())
-	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't get chirps", err)
+	str := r.URL.Query().Get("author_id")
+	var chirps []database.Chirp
+
+	if str != "" {
+		id, err := uuid.Parse(str)
+		if err != nil {
+			respondWithError(w, 400, "invalid author id", err)
+			return
+		}
+		cs, err := apiCfg.db.RetrieveChirpsByUserID(r.Context(), id)
+		if err != nil {
+			respondWithError(w, 500, "err retrieving chirps by author id", err)
+			return
+		}
+		chirps = cs
+	} else {
+		cs, err := apiCfg.db.RetrieveChirps(context.Background())
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Couldn't get chirps", err)
+			return
+		}
+		chirps = cs
 	}
 
 	output := make([]Chirp, 0)
